@@ -20,8 +20,14 @@ export class Problem {
     @Prop({ default: false })
     isWhitelisted: boolean;
 
-    @Prop()
+    @Prop({ default: 'empty' })
     description: string;
+
+    @Prop({ default: 'empty' })
+    title: string;
+
+    @Prop({ default: 6969 })
+    gasLimit: number;
 
     @Prop()
     block: number;

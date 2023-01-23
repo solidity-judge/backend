@@ -8,6 +8,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { SyncMetadata, SyncMetadataSchema } from './schema/syncMetadata.schema';
 import * as Joi from 'joi';
 import { Problem, ProblemSchema } from './schema/problem.schema';
+import { ProblemsModule } from './api/problems/problems.module';
 
 @Module({
     imports: [
@@ -33,6 +34,7 @@ import { Problem, ProblemSchema } from './schema/problem.schema';
             ],
             'core',
         ),
+        ProblemsModule,
     ],
 
     controllers: [AppController],
