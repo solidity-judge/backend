@@ -3,6 +3,13 @@ import { Document } from 'mongoose';
 
 export type ProblemDocument = Problem & Document;
 
+export type SupportedParamType =
+    | 'uint256'
+    | 'int256'
+    | 'string'
+    | 'uint256[]'
+    | 'int256[]';
+
 @Schema()
 export class Problem {
     @Prop()
@@ -22,6 +29,12 @@ export class Problem {
 
     @Prop({ default: 'empty' })
     description: string;
+
+    @Prop({ default: [] })
+    inputFormat: SupportedParamType[];
+
+    @Prop({ default: [] })
+    outputFormat: SupportedParamType[];
 
     @Prop({ default: 'empty' })
     title: string;

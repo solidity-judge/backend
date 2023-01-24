@@ -9,6 +9,7 @@ export class ProblemsService {
         @InjectModel(Problem.name, 'core')
         private problemModel: Model<Problem>,
     ) {}
+
     findAll() {
         return this.problemModel.aggregate([
             {
@@ -23,6 +24,7 @@ export class ProblemsService {
                     address: 1,
                     author: 1,
                     timestamp: 1,
+                    title: 1,
                 },
             },
         ]);
