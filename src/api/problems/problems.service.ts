@@ -10,8 +10,8 @@ export class ProblemsService {
         private problemModel: Model<Problem>,
     ) {}
 
-    findAll() {
-        return this.problemModel.aggregate([
+    async findAll() {
+        let problems = await this.problemModel.aggregate([
             {
                 $match: {
                     isWhitelisted: true,
@@ -28,10 +28,16 @@ export class ProblemsService {
                 },
             },
         ]);
+        return {
+            problems,
+            total: problems.length,
+            itemsPerPage: problems.length,
+            page: 1,
+        };
     }
 
-    findOne(id: number) {
-        return this.problemModel.aggregate([
+    async findOne(id: number) {
+        let results = await this.problemModel.aggregate([
             {
                 $match: {
                     id,
@@ -43,5 +49,6 @@ export class ProblemsService {
                 },
             },
         ]);
+        return results[0];
     }
 }
