@@ -39,8 +39,11 @@ export class Problem {
     @Prop({ default: 'empty' })
     title: string;
 
-    @Prop({ default: 6969 })
+    @Prop({ default: 0 })
     gasLimit: number;
+
+    @Prop({ default: 0 })
+    testVersion: number;
 
     @Prop()
     block: number;

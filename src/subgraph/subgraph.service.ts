@@ -16,6 +16,8 @@ import { AnyBulkWriteOperation } from 'mongodb';
 import { SubmissionDto } from './dtos/submission.dto';
 import { SUBMISSIONS_QUERY } from './queries/submissions';
 import { Submission, SubmissionDocument } from 'src/schema/submission.schema';
+import { TestVersionDto } from './dtos/testVersion.dto';
+import { TEST_VERSIONS_QUERY } from './queries/testVersions';
 
 const SUBGRAPH_URL =
     'https://api.thegraph.com/subgraphs/name/leduythuccs/solidity-judge';
@@ -43,6 +45,11 @@ export class SubgraphService {
         await this.pullSubmissions(
             localBundle['submissions'] ?? 0,
             remoteBundle['submissions'] ?? 0,
+        );
+
+        await this.pullTestVersions(
+            localBundle['testVersions'] ?? 0,
+            remoteBundle['testVersions'] ?? 0,
         );
     }
 
@@ -146,6 +153,65 @@ export class SubgraphService {
             await this.syncMetadataModel.updateOne(
                 {},
                 { submissions: lastSyncingIndex },
+                { upsert: true },
+            );
+        }
+    }
+
+    async pullTestVersions(local: number, remote: number) {
+        if (remote <= local) return;
+        console.log(`Pulling test versions from ${local} to ${remote}...`);
+        for (let i = local; i < remote; i += SUBGRAPH_FETCH_LIMIT) {
+            const endpoint = SUBGRAPH_URL;
+            const data = await request<{ data: TestVersionDto[] }>(
+                endpoint,
+                TEST_VERSIONS_QUERY,
+                {
+                    first: SUBGRAPH_FETCH_LIMIT,
+                    lastSyncingIndex: i,
+                },
+            );
+            const testVersions: TestVersionDto[] = [];
+            // make sure we don't update the same problem twice
+            const problems = new Set<string>();
+            // loop data backwards to get the latest version
+            for (let j = data.data.length - 1; j >= 0; j--) {
+                const doc = data.data[j];
+                if (!problems.has(doc.problem)) {
+                    testVersions.push(doc);
+                    problems.add(doc.problem);
+                }
+            }
+
+            console.log(
+                `Found ${data.data.length} test versions, updating ${testVersions.length} problems...`,
+            );
+
+            const operations: AnyBulkWriteOperation<any>[] = testVersions.map(
+                (doc) => {
+                    return {
+                        updateOne: {
+                            filter: { address: doc.problem },
+                            update: {
+                                $set: {
+                                    testVersion: parseInt(doc.version),
+                                    gasLimit: parseInt(doc.gasLimit),
+                                },
+                            },
+                        },
+                    };
+                },
+            );
+
+            await this.problemModel.bulkWrite(operations);
+
+            const lastSyncingIndex = parseInt(
+                data.data[data.data.length - 1].syncingIndex,
+            );
+
+            await this.syncMetadataModel.updateOne(
+                {},
+                { testVersions: lastSyncingIndex },
                 { upsert: true },
             );
         }
