@@ -3,6 +3,51 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Problem } from 'src/schema/problem.schema';
 
+export type FindAllFilter = {
+    skip: number;
+    limit: number;
+    userAddress: string;
+    filterSolved: boolean;
+};
+
+export type FastFindAllFilter = {
+    skip: number;
+    limit: number;
+};
+
+function getAggregateProject(skip: number, limit: number) {
+    return [
+        {
+            $sort: {
+                id: 1,
+            },
+        },
+        {
+            $facet: {
+                results: [{ $skip: skip }, { $limit: limit }],
+                total: [{ $count: 'total' }],
+            },
+        },
+        {
+            $replaceWith: {
+                $mergeObjects: ['$$ROOT', { $first: '$total' }],
+            },
+        },
+        {
+            $project: {
+                results: 1,
+                total: {
+                    $cond: {
+                        if: { $isArray: '$total' },
+                        then: 0,
+                        else: '$total',
+                    },
+                },
+            },
+        },
+    ] as any;
+}
+
 @Injectable()
 export class ProblemsService {
     constructor(
@@ -10,8 +55,8 @@ export class ProblemsService {
         private problemModel: Model<Problem>,
     ) {}
 
-    async findAll() {
-        let problems = await this.problemModel.aggregate([
+    async fastFindAll({ skip, limit }: FastFindAllFilter) {
+        let [{ results, total }] = await this.problemModel.aggregate([
             {
                 $match: {
                     isWhitelisted: true,
@@ -27,13 +72,98 @@ export class ProblemsService {
                     title: 1,
                 },
             },
+            {
+                $set: {
+                    solved: false,
+                },
+            },
+            ...getAggregateProject(skip, limit),
         ]);
         return {
-            problems,
-            total: problems.length,
-            itemsPerPage: problems.length,
-            page: 1,
+            total,
+            problems: results,
         };
+    }
+
+    async findAll({ skip, limit, userAddress, filterSolved }: FindAllFilter) {
+        if (userAddress == '') {
+            return this.fastFindAll({ skip, limit });
+        }
+
+        const filters = [];
+        if (filterSolved) {
+            filters.push({
+                $match: { 'submissions.0': { $exists: false } },
+            });
+        }
+
+        // find all problems that the user has solved by looking up the
+        // user's submission with the same version as problem.testVersion
+
+        const [{ results, total }] = await this.problemModel.aggregate([
+            {
+                $match: {
+                    isWhitelisted: true,
+                },
+            },
+            {
+                $lookup: {
+                    from: 'submissions',
+                    let: {
+                        problemAddr: '$address',
+                        testVersion: '$testVersion',
+                    },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$problem', '$$problemAddr'] },
+                                        { $eq: ['$version', '$$testVersion'] },
+                                        { $eq: ['$contestant', userAddress] },
+                                        { $eq: ['$point', 10_000] },
+                                    ],
+                                },
+                            },
+                        },
+                        {
+                            $project: {
+                                _id: 1,
+                            },
+                        },
+                    ],
+                    as: 'submissions',
+                },
+            },
+            ...filters,
+            {
+                $set: {
+                    solved: {
+                        $cond: {
+                            if: {
+                                $ne: ['$submissions', []],
+                            },
+                            then: true,
+                            else: false,
+                        },
+                    },
+                },
+            },
+            {
+                $project: {
+                    _id: 0,
+                    id: 1,
+                    address: 1,
+                    author: 1,
+                    timestamp: 1,
+                    title: 1,
+                    solved: 1,
+                },
+            },
+            ...getAggregateProject(skip, limit),
+        ]);
+
+        return { total: total, problems: results };
     }
 
     async findOne(id: number) {
