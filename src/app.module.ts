@@ -9,6 +9,7 @@ import { SyncMetadata, SyncMetadataSchema } from './schema/syncMetadata.schema';
 import * as Joi from 'joi';
 import { Problem, ProblemSchema } from './schema/problem.schema';
 import { ProblemsModule } from './api/problems/problems.module';
+import { Submission, SubmissionSchema } from './schema/submission.schema';
 
 @Module({
     imports: [
@@ -31,6 +32,7 @@ import { ProblemsModule } from './api/problems/problems.module';
             [
                 { name: SyncMetadata.name, schema: SyncMetadataSchema },
                 { name: Problem.name, schema: ProblemSchema },
+                { name: Submission.name, schema: SubmissionSchema },
             ],
             'core',
         ),
