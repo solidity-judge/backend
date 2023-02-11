@@ -2,51 +2,19 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Problem } from 'src/schema/problem.schema';
+import { getAggregateProject } from '../helper';
 
-export type FindAllFilter = {
+export type ProblemFindAllFilter = {
     skip: number;
     limit: number;
     userAddress: string;
     filterSolved: boolean;
 };
 
-export type FastFindAllFilter = {
+export type ProblemFastFindAllFilter = {
     skip: number;
     limit: number;
 };
-
-function getAggregateProject(skip: number, limit: number) {
-    return [
-        {
-            $sort: {
-                id: 1,
-            },
-        },
-        {
-            $facet: {
-                results: [{ $skip: skip }, { $limit: limit }],
-                total: [{ $count: 'total' }],
-            },
-        },
-        {
-            $replaceWith: {
-                $mergeObjects: ['$$ROOT', { $first: '$total' }],
-            },
-        },
-        {
-            $project: {
-                results: 1,
-                total: {
-                    $cond: {
-                        if: { $isArray: '$total' },
-                        then: 0,
-                        else: '$total',
-                    },
-                },
-            },
-        },
-    ] as any;
-}
 
 @Injectable()
 export class ProblemsService {
@@ -55,7 +23,7 @@ export class ProblemsService {
         private problemModel: Model<Problem>,
     ) {}
 
-    async fastFindAll({ skip, limit }: FastFindAllFilter) {
+    async fastFindAll({ skip, limit }: ProblemFastFindAllFilter) {
         let [{ results, total }] = await this.problemModel.aggregate([
             {
                 $match: {
@@ -85,7 +53,12 @@ export class ProblemsService {
         };
     }
 
-    async findAll({ skip, limit, userAddress, filterSolved }: FindAllFilter) {
+    async findAll({
+        skip,
+        limit,
+        userAddress,
+        filterSolved,
+    }: ProblemFindAllFilter) {
         if (userAddress == '') {
             return this.fastFindAll({ skip, limit });
         }

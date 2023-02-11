@@ -10,6 +10,8 @@ import * as Joi from 'joi';
 import { Problem, ProblemSchema } from './schema/problem.schema';
 import { ProblemsModule } from './api/problems/problems.module';
 import { Submission, SubmissionSchema } from './schema/submission.schema';
+import { UsersModule } from './api/users/users.module';
+import { User, UserSchema } from './schema/user.shema';
 
 @Module({
     imports: [
@@ -33,10 +35,12 @@ import { Submission, SubmissionSchema } from './schema/submission.schema';
                 { name: SyncMetadata.name, schema: SyncMetadataSchema },
                 { name: Problem.name, schema: ProblemSchema },
                 { name: Submission.name, schema: SubmissionSchema },
+                { name: User.name, schema: UserSchema },
             ],
             'core',
         ),
         ProblemsModule,
+        UsersModule,
     ],
 
     controllers: [AppController],

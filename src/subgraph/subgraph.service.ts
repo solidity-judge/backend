@@ -18,6 +18,9 @@ import { SUBMISSIONS_QUERY } from './queries/submissions';
 import { Submission, SubmissionDocument } from 'src/schema/submission.schema';
 import { TestVersionDto } from './dtos/testVersion.dto';
 import { TEST_VERSIONS_QUERY } from './queries/testVersions';
+import { UserDto } from './dtos/user.dto';
+import { USERS_QUERY } from './queries/user';
+import { User, UserDocument } from 'src/schema/user.shema';
 
 const SUBGRAPH_URL =
     'https://api.thegraph.com/subgraphs/name/leduythuccs/solidity-judge';
@@ -32,16 +35,25 @@ export class SubgraphService {
         private problemModel: Model<ProblemDocument>,
         @InjectModel(Submission.name, 'core')
         private submissionModel: Model<SubmissionDocument>,
+        @InjectModel(User.name, 'core')
+        private userModel: Model<UserDocument>,
     ) {}
 
     @Cron('*/30 * * * * *')
     async handleCron() {
         const localBundle = await this.getSyncMetadata();
         const remoteBundle = await this.getBundle();
+
         await this.pullProblems(
             localBundle['problems'] ?? 0,
             remoteBundle['problems'] ?? 0,
         );
+
+        await this.pullUsers(
+            localBundle['users'] ?? 0,
+            remoteBundle['users'] ?? 0,
+        );
+
         await this.pullSubmissions(
             localBundle['submissions'] ?? 0,
             remoteBundle['submissions'] ?? 0,
@@ -212,6 +224,56 @@ export class SubgraphService {
             await this.syncMetadataModel.updateOne(
                 {},
                 { testVersions: lastSyncingIndex },
+                { upsert: true },
+            );
+        }
+    }
+
+    async pullUsers(local: number, remote: number) {
+        if (remote <= local) return;
+        console.log(`Pulling users from ${local} to ${remote}...`);
+        for (let i = local; i < remote; i += SUBGRAPH_FETCH_LIMIT) {
+            const endpoint = SUBGRAPH_URL;
+            const data = await request<{ data: UserDto[] }>(
+                endpoint,
+                USERS_QUERY,
+                {
+                    first: SUBGRAPH_FETCH_LIMIT,
+                    lastSyncingIndex: i,
+                },
+            );
+            const operations: AnyBulkWriteOperation<any>[] = data.data.map(
+                (doc) => {
+                    const username = doc.username;
+                    return {
+                        updateOne: {
+                            filter: { username },
+                            update: {
+                                $setOnInsert: {
+                                    address: doc.address,
+                                    username: doc.username,
+                                    gate: doc.gate,
+
+                                    block: parseInt(doc.block),
+                                    timestamp: new Date(
+                                        parseInt(doc.timestamp) * 1000,
+                                    ),
+                                    txHash: doc.txHash,
+                                },
+                            },
+                            upsert: true,
+                        },
+                    };
+                },
+            );
+
+            await this.userModel.bulkWrite(operations);
+            const lastSyncingIndex = parseInt(
+                data.data[data.data.length - 1].syncingIndex,
+            );
+            await this.syncMetadataModel.updateOne(
+                {},
+                { users: lastSyncingIndex },
                 { upsert: true },
             );
         }
