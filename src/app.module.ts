@@ -12,6 +12,7 @@ import { ProblemsModule } from './api/problems/problems.module';
 import { Submission, SubmissionSchema } from './schema/submission.schema';
 import { UsersModule } from './api/users/users.module';
 import { User, UserSchema } from './schema/user.shema';
+import { SubmissionsModule } from './api/submissions/submissions.module';
 
 @Module({
     imports: [
@@ -41,6 +42,7 @@ import { User, UserSchema } from './schema/user.shema';
         ),
         ProblemsModule,
         UsersModule,
+        SubmissionsModule,
     ],
 
     controllers: [AppController],
