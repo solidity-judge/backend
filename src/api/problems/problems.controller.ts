@@ -12,6 +12,7 @@ import {
     ParseBoolPipe,
 } from '@nestjs/common';
 import { ProblemsService } from './problems.service';
+import { UpdateProblemDto } from './updateProblem.dto';
 
 @Controller('problems')
 export class ProblemsController {
@@ -36,6 +37,22 @@ export class ProblemsController {
 
     @Get(':id')
     findOne(@Param('id') id: string) {
+        return this.problemsService.findOne(+id);
+    }
+
+    @Patch(':id')
+    async update(
+        @Param('id') id: string,
+        @Body() updateProblemDto: UpdateProblemDto,
+    ) {
+        const safeUpdateProblemDto: UpdateProblemDto = {
+            isWhitelisted: updateProblemDto.isWhitelisted,
+            description: updateProblemDto.description,
+            inputFormat: updateProblemDto.inputFormat,
+            outputFormat: updateProblemDto.outputFormat,
+            title: updateProblemDto.title,
+        };
+        await this.problemsService.update(+id, safeUpdateProblemDto);
         return this.problemsService.findOne(+id);
     }
 }

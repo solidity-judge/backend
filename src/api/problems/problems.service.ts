@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Problem } from 'src/schema/problem.schema';
 import { getAggregateProject } from '../helper';
+import { UpdateProblemDto } from './updateProblem.dto';
 
 export type ProblemFindAllFilter = {
     skip: number;
@@ -153,5 +154,14 @@ export class ProblemsService {
             },
         ]);
         return results[0];
+    }
+
+    async update(id: number, updateProblemDto: UpdateProblemDto) {
+        await this.problemModel.updateOne(
+            { id },
+            {
+                $set: updateProblemDto,
+            },
+        );
     }
 }
