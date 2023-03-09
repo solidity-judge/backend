@@ -10,11 +10,13 @@ export type ProblemFindAllFilter = {
     limit: number;
     userAddress: string;
     filterSolved: boolean;
+    category: string;
 };
 
 export type ProblemFastFindAllFilter = {
     skip: number;
     limit: number;
+    category: string;
 };
 
 @Injectable()
@@ -24,13 +26,23 @@ export class ProblemsService {
         private problemModel: Model<Problem>,
     ) {}
 
-    async fastFindAll({ skip, limit }: ProblemFastFindAllFilter) {
+    async fastFindAll({ skip, limit, category }: ProblemFastFindAllFilter) {
+        const filterStage = [];
+        if (category) {
+            filterStage.push({
+                $match: {
+                    categories: category,
+                },
+            });
+        }
+
         let [{ results, total }] = await this.problemModel.aggregate([
             {
                 $match: {
                     isWhitelisted: true,
                 },
             },
+            ...filterStage,
             {
                 $project: {
                     _id: 0,
@@ -39,6 +51,7 @@ export class ProblemsService {
                     author: 1,
                     timestamp: 1,
                     title: 1,
+                    categories: 1,
                 },
             },
             {
@@ -59,15 +72,24 @@ export class ProblemsService {
         limit,
         userAddress,
         filterSolved,
+        category,
     }: ProblemFindAllFilter) {
         if (userAddress == '') {
-            return this.fastFindAll({ skip, limit });
+            return this.fastFindAll({ skip, limit, category });
         }
 
         const filters = [];
         if (filterSolved) {
             filters.push({
                 $match: { 'submissions.0': { $exists: false } },
+            });
+        }
+
+        if (category) {
+            filters.push({
+                $match: {
+                    categories: category,
+                },
             });
         }
 
@@ -132,6 +154,7 @@ export class ProblemsService {
                     timestamp: 1,
                     title: 1,
                     solved: 1,
+                    categories: 1,
                 },
             },
             ...getAggregateProject(skip, limit),

@@ -53,6 +53,9 @@ export class Problem {
 
     @Prop()
     txHash: string;
+
+    @Prop({ default: [] })
+    categories: string[];
 }
 
 export const ProblemSchema = SchemaFactory.createForClass(Problem);

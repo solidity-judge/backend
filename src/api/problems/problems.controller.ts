@@ -25,6 +25,7 @@ export class ProblemsController {
         @Query('user', new DefaultValuePipe('')) user: string,
         @Query('filterSolved', new DefaultValuePipe(false), ParseBoolPipe)
         filterSolved: boolean,
+        @Query('category', new DefaultValuePipe('')) category: string,
     ) {
         user = user.toLowerCase();
         return this.problemsService.findAll({
@@ -32,6 +33,7 @@ export class ProblemsController {
             limit,
             userAddress: user,
             filterSolved,
+            category,
         });
     }
 
@@ -51,6 +53,7 @@ export class ProblemsController {
             inputFormat: updateProblemDto.inputFormat,
             outputFormat: updateProblemDto.outputFormat,
             title: updateProblemDto.title,
+            categories: updateProblemDto.categories,
         };
         await this.problemsService.update(+id, safeUpdateProblemDto);
         return this.problemsService.findOne(+id);

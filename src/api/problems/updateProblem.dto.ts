@@ -4,4 +4,5 @@ export type UpdateProblemDto = {
     inputFormat?: string[];
     outputFormat?: string[];
     title?: string;
+    categories?: string[];
 };
