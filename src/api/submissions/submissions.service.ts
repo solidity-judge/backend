@@ -37,7 +37,7 @@ export class SubmissionsService {
             });
         }
 
-        let [{ results, total }] = await this.submissionModel.aggregate([
+        const [{ results, total }] = await this.submissionModel.aggregate([
             ...filterStages,
             {
                 $project: {

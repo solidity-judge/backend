@@ -55,7 +55,9 @@ export class ProblemsController {
             title: updateProblemDto.title,
             categories: updateProblemDto.categories,
         };
-        await this.problemsService.update(+id, safeUpdateProblemDto);
+        // remove undefined fields
+        const safeObjects = Object.fromEntries(Object.entries(safeUpdateProblemDto).filter(([x, y]) => y != undefined));
+        await this.problemsService.update(+id, safeObjects as UpdateProblemDto);
         return this.problemsService.findOne(+id);
     }
 }

@@ -1,4 +1,4 @@
 export type BundleDto = {
-  id: string;
-  syncingIndex: string;
+    id: string;
+    syncingIndex: string;
 };

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { Category } from 'src/schema/category.schema';
 import { Problem } from 'src/schema/problem.schema';
 import { getAggregateProject } from '../helper';
 import { UpdateProblemDto } from './updateProblem.dto';
@@ -24,7 +25,25 @@ export class ProblemsService {
     constructor(
         @InjectModel(Problem.name, 'core')
         private problemModel: Model<Problem>,
+        @InjectModel(Category.name, 'core')
+        private categoryModel: Model<Category>,
     ) {}
+
+    async mapCategories(problems: { categories: (string | {key: string, name: string})[] }[]) {
+        const allCategories: {key: string, name: string}[] = await this.categoryModel.find({});
+        const map = new Map<string, string>();
+        allCategories.forEach((category) => {
+            map.set(category.key, category.name);
+        });
+        problems.forEach((problem) => {
+            const categories = problem.categories;
+            problem.categories = categories.map((category) => ({
+                key: category as string,
+                name: map.get(category as string) ?? '?',
+            }));
+        });
+        return problems;
+    }
 
     async fastFindAll({ skip, limit, category }: ProblemFastFindAllFilter) {
         const filterStage = [];
@@ -36,7 +55,7 @@ export class ProblemsService {
             });
         }
 
-        let [{ results, total }] = await this.problemModel.aggregate([
+        const [{ results, total }] = await this.problemModel.aggregate([
             {
                 $match: {
                     isWhitelisted: true,
@@ -63,7 +82,7 @@ export class ProblemsService {
         ]);
         return {
             total,
-            problems: results,
+            problems: await this.mapCategories(results),
         };
     }
 
@@ -160,11 +179,12 @@ export class ProblemsService {
             ...getAggregateProject(skip, limit),
         ]);
 
-        return { total: total, problems: results };
+        return { total: total, 
+            problems: await this.mapCategories(results), };
     }
 
     async findOne(id: number) {
-        let results = await this.problemModel.aggregate([
+        const results = await this.problemModel.aggregate([
             {
                 $match: {
                     id,
@@ -176,7 +196,7 @@ export class ProblemsService {
                 },
             },
         ]);
-        return results[0];
+        return (await this.mapCategories(results))[0];
     }
 
     async update(id: number, updateProblemDto: UpdateProblemDto) {

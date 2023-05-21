@@ -16,7 +16,7 @@ export class UsersService {
         private userModel: Model<User>,
     ) {}
     async findAll({ skip, limit }: UserFindAllFilter) {
-        let [{ results, total }] = await this.userModel.aggregate([
+        const [{ results, total }] = await this.userModel.aggregate([
             {
                 $lookup: {
                     from: 'submissions',

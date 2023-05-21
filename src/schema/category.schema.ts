@@ -5,7 +5,8 @@ export type UserDocument = Category & Document;
 
 @Schema()
 export class Category {
-    @Prop()
+    // key is unique
+    @Prop({ unique: true })
     key: string;
 
     @Prop()
