@@ -16,6 +16,9 @@ export class SyncMetadata {
 
     @Prop({ default: 0 })
     testVersions: number;
+
+    @Prop({ default: 0 })
+    problemDeadlines: number;
 }
 
 export const SyncMetadataSchema = SchemaFactory.createForClass(SyncMetadata);

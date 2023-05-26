@@ -24,6 +24,9 @@ export class Problem {
     @Prop()
     checker: string;
 
+    @Prop()
+    deadline: number;
+
     @Prop({ default: false })
     isWhitelisted: boolean;
 
@@ -53,6 +56,9 @@ export class Problem {
 
     @Prop()
     txHash: string;
+
+    @Prop({ default: [] })
+    categories: string[];
 }
 
 export const ProblemSchema = SchemaFactory.createForClass(Problem);

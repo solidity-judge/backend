@@ -21,7 +21,7 @@ export class Submission {
     solution: string;
 
     @Prop()
-    version: number;
+    isPreDeadline: boolean;
 
     @Prop()
     block: number;

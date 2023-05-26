@@ -1,20 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { Category } from 'src/schema/category.schema';
 import { Problem } from 'src/schema/problem.schema';
 import { getAggregateProject } from '../helper';
-import { UpdateProblemDto } from './updateProblem.dto';
+import { UpdateProblemDto } from './dto/updateProblem.dto';
+import { ProblemEntity } from './entity/problem.entity';
 
 export type ProblemFindAllFilter = {
     skip: number;
     limit: number;
     userAddress: string;
     filterSolved: boolean;
+    category: string;
 };
 
 export type ProblemFastFindAllFilter = {
     skip: number;
     limit: number;
+    category: string;
 };
 
 @Injectable()
@@ -22,15 +26,46 @@ export class ProblemsService {
     constructor(
         @InjectModel(Problem.name, 'core')
         private problemModel: Model<Problem>,
+        @InjectModel(Category.name, 'core')
+        private categoryModel: Model<Category>,
     ) {}
 
-    async fastFindAll({ skip, limit }: ProblemFastFindAllFilter) {
-        let [{ results, total }] = await this.problemModel.aggregate([
+    async mapCategories<
+        T extends { categories: (string | { key: string; name: string })[] }[],
+    >(problems: T) {
+        const allCategories: { key: string; name: string }[] =
+            await this.categoryModel.find({});
+        const map = new Map<string, string>();
+        allCategories.forEach((category) => {
+            map.set(category.key, category.name);
+        });
+        problems.forEach((problem) => {
+            const categories = problem.categories;
+            problem.categories = categories.map((category) => ({
+                key: category as string,
+                name: map.get(category as string) ?? '?',
+            }));
+        });
+        return problems;
+    }
+
+    async fastFindAll({ skip, limit, category }: ProblemFastFindAllFilter) {
+        const filterStage = [];
+        if (category) {
+            filterStage.push({
+                $match: {
+                    categories: category,
+                },
+            });
+        }
+
+        const [{ results, total }] = await this.problemModel.aggregate([
             {
                 $match: {
                     isWhitelisted: true,
                 },
             },
+            ...filterStage,
             {
                 $project: {
                     _id: 0,
@@ -39,6 +74,7 @@ export class ProblemsService {
                     author: 1,
                     timestamp: 1,
                     title: 1,
+                    categories: 1,
                 },
             },
             {
@@ -50,7 +86,7 @@ export class ProblemsService {
         ]);
         return {
             total,
-            problems: results,
+            problems: await this.mapCategories(results),
         };
     }
 
@@ -59,15 +95,24 @@ export class ProblemsService {
         limit,
         userAddress,
         filterSolved,
+        category,
     }: ProblemFindAllFilter) {
         if (userAddress == '') {
-            return this.fastFindAll({ skip, limit });
+            return this.fastFindAll({ skip, limit, category });
         }
 
         const filters = [];
         if (filterSolved) {
             filters.push({
                 $match: { 'submissions.0': { $exists: false } },
+            });
+        }
+
+        if (category) {
+            filters.push({
+                $match: {
+                    categories: category,
+                },
             });
         }
 
@@ -129,19 +174,21 @@ export class ProblemsService {
                     id: 1,
                     address: 1,
                     author: 1,
+                    deadline: 1,
                     timestamp: 1,
                     title: 1,
                     solved: 1,
+                    categories: 1,
                 },
             },
             ...getAggregateProject(skip, limit),
         ]);
 
-        return { total: total, problems: results };
+        return { total: total, problems: await this.mapCategories(results) };
     }
 
-    async findOne(id: number) {
-        let results = await this.problemModel.aggregate([
+    async findOne(id: number): Promise<ProblemEntity> {
+        const results = await this.problemModel.aggregate([
             {
                 $match: {
                     id,
@@ -153,7 +200,7 @@ export class ProblemsService {
                 },
             },
         ]);
-        return results[0];
+        return (await this.mapCategories(results))[0];
     }
 
     async update(id: number, updateProblemDto: UpdateProblemDto) {
