@@ -46,7 +46,7 @@ export class SubmissionsService {
                     point: 1,
                     problem: 1,
                     solution: 1,
-                    version: 1,
+                    isPreDeadline: 1,
                     block: 1,
                     timestamp: 1,
                     txHash: 1,

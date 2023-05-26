@@ -21,6 +21,8 @@ import { TEST_VERSIONS_QUERY } from './queries/testVersions';
 import { UserDto } from './dtos/user.dto';
 import { USERS_QUERY } from './queries/user';
 import { User, UserDocument } from 'src/schema/user.shema';
+import { ProblemDeadlineDto } from './dtos/problemDeadline.dto';
+import { PROBLEM_DEADLINES_QUERY } from './queries/problemDeadlines';
 
 const SUBGRAPH_URL =
     'https://api.thegraph.com/subgraphs/name/leduythuccs/solidity-judge';
@@ -62,6 +64,11 @@ export class SubgraphService {
         await this.pullTestVersions(
             localBundle['testVersions'] ?? 0,
             remoteBundle['testVersions'] ?? 0,
+        );
+
+        await this.pullProblemDeadlines(
+            localBundle['problemDeadlines'] ?? 0,
+            remoteBundle['problemDeadlines'] ?? 0,
         );
     }
 
@@ -274,6 +281,47 @@ export class SubgraphService {
             await this.syncMetadataModel.updateOne(
                 {},
                 { users: lastSyncingIndex },
+                { upsert: true },
+            );
+        }
+    }
+
+    async pullProblemDeadlines(local: number, remote: number) {
+        if (remote <= local) return;
+        console.log(`Pulling problem deadlines from ${local} to ${remote}...`);
+        for (let i = local; i < remote; i += SUBGRAPH_FETCH_LIMIT) {
+            const endpoint = SUBGRAPH_URL;
+            const data = await request<{ data: ProblemDeadlineDto[] }>(
+                endpoint,
+                PROBLEM_DEADLINES_QUERY,
+                {
+                    first: SUBGRAPH_FETCH_LIMIT,
+                    lastSyncingIndex: i,
+                },
+            );
+            const operations: AnyBulkWriteOperation<any>[] = data.data.map(
+                (doc) => {
+                    const address = doc.problem;
+                    return {
+                        updateOne: {
+                            filter: { address },
+                            update: {
+                                $set: {
+                                    deadline: doc.deadline,
+                                },
+                            },
+                        },
+                    };
+                },
+            );
+
+            await this.problemModel.bulkWrite(operations);
+            const lastSyncingIndex = parseInt(
+                data.data[data.data.length - 1].syncingIndex,
+            );
+            await this.syncMetadataModel.updateOne(
+                {},
+                { problemDeadlines: lastSyncingIndex },
                 { upsert: true },
             );
         }

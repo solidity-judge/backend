@@ -24,6 +24,9 @@ export class Problem {
     @Prop()
     checker: string;
 
+    @Prop()
+    deadline: number;
+
     @Prop({ default: false })
     isWhitelisted: boolean;
 

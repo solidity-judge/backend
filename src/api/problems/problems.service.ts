@@ -29,8 +29,11 @@ export class ProblemsService {
         private categoryModel: Model<Category>,
     ) {}
 
-    async mapCategories(problems: { categories: (string | {key: string, name: string})[] }[]) {
-        const allCategories: {key: string, name: string}[] = await this.categoryModel.find({});
+    async mapCategories(
+        problems: { categories: (string | { key: string; name: string })[] }[],
+    ) {
+        const allCategories: { key: string; name: string }[] =
+            await this.categoryModel.find({});
         const map = new Map<string, string>();
         allCategories.forEach((category) => {
             map.set(category.key, category.name);
@@ -179,8 +182,7 @@ export class ProblemsService {
             ...getAggregateProject(skip, limit),
         ]);
 
-        return { total: total, 
-            problems: await this.mapCategories(results), };
+        return { total: total, problems: await this.mapCategories(results) };
     }
 
     async findOne(id: number) {
