@@ -4,7 +4,8 @@ import { Model } from 'mongoose';
 import { Category } from 'src/schema/category.schema';
 import { Problem } from 'src/schema/problem.schema';
 import { getAggregateProject } from '../helper';
-import { UpdateProblemDto } from './updateProblem.dto';
+import { UpdateProblemDto } from './dto/updateProblem.dto';
+import { ProblemEntity } from './entity/problem.entity';
 
 export type ProblemFindAllFilter = {
     skip: number;
@@ -29,9 +30,9 @@ export class ProblemsService {
         private categoryModel: Model<Category>,
     ) {}
 
-    async mapCategories(
-        problems: { categories: (string | { key: string; name: string })[] }[],
-    ) {
+    async mapCategories<
+        T extends { categories: (string | { key: string; name: string })[] }[],
+    >(problems: T) {
         const allCategories: { key: string; name: string }[] =
             await this.categoryModel.find({});
         const map = new Map<string, string>();
@@ -173,6 +174,7 @@ export class ProblemsService {
                     id: 1,
                     address: 1,
                     author: 1,
+                    deadline: 1,
                     timestamp: 1,
                     title: 1,
                     solved: 1,
@@ -185,7 +187,7 @@ export class ProblemsService {
         return { total: total, problems: await this.mapCategories(results) };
     }
 
-    async findOne(id: number) {
+    async findOne(id: number): Promise<ProblemEntity> {
         const results = await this.problemModel.aggregate([
             {
                 $match: {

@@ -11,16 +11,35 @@ import {
     DefaultValuePipe,
     ParseBoolPipe,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ProblemsService } from './problems.service';
-import { UpdateProblemDto } from './updateProblem.dto';
+import { UpdateProblemDto } from './dto/updateProblem.dto';
+import { NarrowedProblemEntity, ProblemEntity } from './entity/problem.entity';
 
 @ApiTags('Problems')
 @Controller('problems')
 export class ProblemsController {
     constructor(private readonly problemsService: ProblemsService) {}
 
+    @ApiResponse({
+        status: 200,
+        description: 'Returns list of problems',
+        type: NarrowedProblemEntity,
+    })
     @Get()
+    @ApiQuery({ name: 'skip', required: false, description: 'Default 0' })
+    @ApiQuery({ name: 'limit', required: false, description: 'Default 10' })
+    @ApiQuery({ name: 'user', required: false, description: 'Default empty' })
+    @ApiQuery({
+        name: 'filterSolved',
+        required: false,
+        description: 'Default false',
+    })
+    @ApiQuery({
+        name: 'category',
+        required: false,
+        description: 'Default empty',
+    })
     findAll(
         @Query('skip', new DefaultValuePipe(0), ParseIntPipe) skip: number,
         @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
@@ -39,6 +58,11 @@ export class ProblemsController {
         });
     }
 
+    @ApiResponse({
+        status: 200,
+        description: 'Returns problem data',
+        type: ProblemEntity,
+    })
     @Get(':id')
     findOne(@Param('id') id: string) {
         return this.problemsService.findOne(+id);
