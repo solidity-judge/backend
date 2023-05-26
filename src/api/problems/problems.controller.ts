@@ -11,9 +11,11 @@ import {
     DefaultValuePipe,
     ParseBoolPipe,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { ProblemsService } from './problems.service';
 import { UpdateProblemDto } from './updateProblem.dto';
 
+@ApiTags('Problems')
 @Controller('problems')
 export class ProblemsController {
     constructor(private readonly problemsService: ProblemsService) {}
@@ -56,7 +58,11 @@ export class ProblemsController {
             categories: updateProblemDto.categories,
         };
         // remove undefined fields
-        const safeObjects = Object.fromEntries(Object.entries(safeUpdateProblemDto).filter(([x, y]) => y != undefined));
+        const safeObjects = Object.fromEntries(
+            Object.entries(safeUpdateProblemDto).filter(
+                ([x, y]) => y != undefined,
+            ),
+        );
         await this.problemsService.update(+id, safeObjects as UpdateProblemDto);
         return this.problemsService.findOne(+id);
     }
