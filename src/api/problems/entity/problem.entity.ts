@@ -62,3 +62,11 @@ export class NarrowedProblemEntity extends PickType(ProblemEntity, [
     @ApiProperty()
     solved: boolean;
 }
+
+export class ProblemAllEntity {
+    @ApiProperty()
+    total: number;
+
+    @ApiProperty({ type: [NarrowedProblemEntity] })
+    problems: NarrowedProblemEntity[];
+}
