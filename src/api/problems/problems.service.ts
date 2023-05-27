@@ -72,6 +72,7 @@ export class ProblemsService {
                     id: 1,
                     address: 1,
                     author: 1,
+                    deadline: 1,
                     timestamp: 1,
                     title: 1,
                     categories: 1,

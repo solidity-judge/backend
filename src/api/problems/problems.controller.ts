@@ -14,7 +14,11 @@ import {
 import { ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ProblemsService } from './problems.service';
 import { UpdateProblemDto } from './dto/updateProblem.dto';
-import { NarrowedProblemEntity, ProblemEntity } from './entity/problem.entity';
+import {
+    NarrowedProblemEntity,
+    ProblemAllEntity,
+    ProblemEntity,
+} from './entity/problem.entity';
 
 @ApiTags('Problems')
 @Controller('problems')
@@ -24,7 +28,7 @@ export class ProblemsController {
     @ApiResponse({
         status: 200,
         description: 'Returns list of problems',
-        type: NarrowedProblemEntity,
+        type: ProblemAllEntity,
     })
     @Get()
     @ApiQuery({ name: 'skip', required: false, description: 'Default 0' })

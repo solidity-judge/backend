@@ -15,6 +15,8 @@ import { User, UserSchema } from './schema/user.shema';
 import { SubmissionsModule } from './api/submissions/submissions.module';
 import { CategoryModule } from './api/category/category.module';
 import { Category, CategorySchema } from './schema/category.schema';
+import { Contest, ContestSchema } from './schema/contest.schema';
+import { ContestModule } from './api/contest/contest.module';
 
 @Module({
     imports: [
@@ -40,6 +42,7 @@ import { Category, CategorySchema } from './schema/category.schema';
                 { name: Submission.name, schema: SubmissionSchema },
                 { name: User.name, schema: UserSchema },
                 { name: Category.name, schema: CategorySchema },
+                { name: Contest.name, schema: ContestSchema },
             ],
             'core',
         ),
@@ -47,6 +50,7 @@ import { Category, CategorySchema } from './schema/category.schema';
         UsersModule,
         SubmissionsModule,
         CategoryModule,
+        ContestModule,
     ],
 
     controllers: [AppController],
