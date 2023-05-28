@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import keccak256 from 'keccak256';
 const solc = require('solc');
 
 @Injectable()
@@ -36,6 +37,7 @@ export class AppService {
         if (errors.length > 0) {
             return {
                 bytecode: '',
+                hash: '',
                 errors: errors.map((x) => {
                     return {
                         msg: x.formattedMessage,
@@ -46,14 +48,23 @@ export class AppService {
         }
 
         for (const contractName in output.contracts[contractFile]) {
+            const bytecode =
+                '0x' +
+                output.contracts[contractFile][contractName].evm.bytecode
+                    .object;
+            const hash = keccak256(bytecode).toString('hex');
             return {
-                bytecode:
-                    '0x' +
-                    output.contracts[contractFile][contractName].evm.bytecode
-                        .object,
+                bytecode,
+                hash,
                 errors: [],
             };
         }
-        return { bytecode: '', msg: 'Compilation failed - no contract found' };
+        return {
+            bytecode: '',
+            hash: '',
+            errors: [
+                { msg: 'Compilation failed - no contract found', code: '69' },
+            ],
+        };
     }
 }
