@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Category } from 'src/schema/category.schema';
+import { Contest } from 'src/schema/contest.schema';
 import { Problem } from 'src/schema/problem.schema';
 import { getAggregateProject } from '../helper';
 import { UpdateProblemDto } from './dto/updateProblem.dto';
@@ -13,12 +14,14 @@ export type ProblemFindAllFilter = {
     userAddress: string;
     filterSolved: boolean;
     category: string;
+    contest: number;
 };
 
 export type ProblemFastFindAllFilter = {
     skip: number;
     limit: number;
     category: string;
+    contest: number;
 };
 
 @Injectable()
@@ -28,6 +31,8 @@ export class ProblemsService {
         private problemModel: Model<Problem>,
         @InjectModel(Category.name, 'core')
         private categoryModel: Model<Category>,
+        @InjectModel(Contest.name, 'core')
+        private contestModel: Model<Contest>,
     ) {}
 
     async mapCategories<
@@ -49,7 +54,12 @@ export class ProblemsService {
         return problems;
     }
 
-    async fastFindAll({ skip, limit, category }: ProblemFastFindAllFilter) {
+    async fastFindAll({
+        skip,
+        limit,
+        category,
+        contest,
+    }: ProblemFastFindAllFilter) {
         const filterStage = [];
         if (category) {
             filterStage.push({
@@ -57,6 +67,22 @@ export class ProblemsService {
                     categories: category,
                 },
             });
+        }
+
+        if (contest != 0) {
+            const contestDoc = await this.contestModel.findOne({
+                id: contest,
+            });
+            console.log(contestDoc?.problems);
+            if (contestDoc) {
+                filterStage.push({
+                    $match: {
+                        id: {
+                            $in: contestDoc.problems,
+                        },
+                    },
+                });
+            }
         }
 
         const [{ results, total }] = await this.problemModel.aggregate([
@@ -97,9 +123,10 @@ export class ProblemsService {
         userAddress,
         filterSolved,
         category,
+        contest,
     }: ProblemFindAllFilter) {
         if (userAddress == '') {
-            return this.fastFindAll({ skip, limit, category });
+            return this.fastFindAll({ skip, limit, category, contest });
         }
 
         const filters = [];
@@ -115,6 +142,21 @@ export class ProblemsService {
                     categories: category,
                 },
             });
+        }
+
+        if (contest != 0) {
+            const contestDoc = await this.contestModel.findOne({
+                id: contest,
+            });
+            if (contestDoc) {
+                filters.push({
+                    $match: {
+                        id: {
+                            $in: contestDoc.problems,
+                        },
+                    },
+                });
+            }
         }
 
         // find all problems that the user has solved by looking up the

@@ -35,6 +35,11 @@ export class ProblemsController {
     @ApiQuery({ name: 'limit', required: false, description: 'Default 10' })
     @ApiQuery({ name: 'user', required: false, description: 'Default empty' })
     @ApiQuery({
+        name: 'contest',
+        required: false,
+        description: 'Default empty',
+    })
+    @ApiQuery({
         name: 'filterSolved',
         required: false,
         description: 'Default false',
@@ -48,6 +53,8 @@ export class ProblemsController {
         @Query('skip', new DefaultValuePipe(0), ParseIntPipe) skip: number,
         @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
         @Query('user', new DefaultValuePipe('')) user: string,
+        @Query('contest', new DefaultValuePipe(0), ParseIntPipe)
+        contest: number,
         @Query('filterSolved', new DefaultValuePipe(false), ParseBoolPipe)
         filterSolved: boolean,
         @Query('category', new DefaultValuePipe('')) category: string,
@@ -59,6 +66,7 @@ export class ProblemsController {
             userAddress: user,
             filterSolved,
             category,
+            contest,
         });
     }
 

@@ -150,7 +150,7 @@ export class SubgraphService {
                                     point: parseInt(doc.point),
                                     contestant: doc.contestant,
                                     // verdicts: doc.verdicts,
-                                    version: parseInt(doc.version),
+                                    version: 0,
 
                                     block: parseInt(doc.block),
                                     timestamp: new Date(

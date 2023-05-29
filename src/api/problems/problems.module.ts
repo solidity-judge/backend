@@ -4,6 +4,7 @@ import { ProblemsController } from './problems.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Problem, ProblemSchema } from 'src/schema/problem.schema';
 import { Category, CategorySchema } from 'src/schema/category.schema';
+import { Contest, ContestSchema } from 'src/schema/contest.schema';
 
 @Module({
     imports: [
@@ -13,6 +14,10 @@ import { Category, CategorySchema } from 'src/schema/category.schema';
         ),
         MongooseModule.forFeature(
             [{ name: Category.name, schema: CategorySchema }],
+            'core',
+        ),
+        MongooseModule.forFeature(
+            [{ name: Contest.name, schema: ContestSchema }],
             'core',
         ),
     ],

@@ -14,7 +14,6 @@ export const SUBMISSIONS_QUERY = gql`
             point
             contestant
             verdicts
-            version
 
             syncingIndex
             block

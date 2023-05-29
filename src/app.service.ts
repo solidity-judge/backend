@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import keccak256 from 'keccak256';
+const keccak256 = require('keccak256');
 const solc = require('solc');
 
 @Injectable()
@@ -52,7 +52,7 @@ export class AppService {
                 '0x' +
                 output.contracts[contractFile][contractName].evm.bytecode
                     .object;
-            const hash = keccak256(bytecode).toString('hex');
+            const hash: string = keccak256(bytecode).toString('hex');
             return {
                 bytecode,
                 hash,
