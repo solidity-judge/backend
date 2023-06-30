@@ -5,6 +5,7 @@ export type SubmissionDto = {
     point: string;
     contestant: string;
     verdicts: number[];
+    isPreDeadline: boolean;
 
     syncingIndex: string;
     block: string;

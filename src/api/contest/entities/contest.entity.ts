@@ -26,3 +26,41 @@ export class ContestAllEntity {
     })
     contests: ContestEntity[];
 }
+
+export class RankingSubmissionEntity {
+    @ApiProperty()
+    point: number;
+
+    @ApiProperty()
+    timestamp: Date;
+
+    @ApiProperty()
+    solution: string;
+}
+
+export class RankingUserEntity {
+    @ApiProperty()
+    contestant: string;
+
+    @ApiProperty()
+    address: string;
+
+    @ApiProperty()
+    totalPoints: number;
+
+    @ApiProperty({
+        type: [RankingSubmissionEntity],
+        nullable: true,
+    })
+    submissions: RankingSubmissionEntity[];
+}
+
+export class RankingEntity {
+    @ApiProperty()
+    total: number;
+
+    @ApiProperty({
+        type: [RankingUserEntity],
+    })
+    ranking: RankingUserEntity[];
+}

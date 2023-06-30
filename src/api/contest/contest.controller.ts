@@ -14,7 +14,12 @@ import { ContestService } from './contest.service';
 import { ApiQuery, ApiResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateContestDto } from './dto/create-contest.dto';
 import { UpdateContestDto } from './dto/update-contest.dto';
-import { ContestAllEntity, ContestEntity } from './entities/contest.entity';
+import {
+    ContestAllEntity,
+    ContestEntity,
+    RankingEntity,
+    RankingUserEntity,
+} from './entities/contest.entity';
 
 @ApiTags('Contests')
 @Controller('contests')
@@ -70,5 +75,20 @@ export class ContestController {
     @ApiOperation({ summary: 'Delete contest' })
     remove(@Param('id') id: string) {
         return this.contestService.remove(+id);
+    }
+
+    @Get(':id/ranking')
+    @ApiOperation({ summary: 'Get ranking of a contest' })
+    @ApiResponse({
+        status: 200,
+        description: 'Returns ranking',
+        type: RankingEntity,
+    })
+    async ranking(@Param('id') id: string) {
+        const ranks = await this.contestService.ranking(+id);
+        return {
+            total: ranks.length,
+            ranking: ranks,
+        };
     }
 }

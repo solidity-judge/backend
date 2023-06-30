@@ -149,7 +149,7 @@ export class SubgraphService {
                                     solution: doc.solution,
                                     point: parseInt(doc.point),
                                     contestant: doc.contestant,
-                                    // verdicts: doc.verdicts,
+                                    isPreDeadline: doc.isPreDeadline,
                                     version: 0,
 
                                     block: parseInt(doc.block),
